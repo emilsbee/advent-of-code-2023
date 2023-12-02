@@ -1,8 +1,6 @@
 const fs = require('node:fs');
 const readline = require('node:readline');
 
-const NUMBERS_AND_WORDS = false; // determines whether to consider only numbers like 6 or also words like six
-
 const digitMap = {
   'one': '1',
   'two': '2',
@@ -35,28 +33,25 @@ async function main() {
     for (const lineCharIndex in line) {
       const lineChar = line[lineCharIndex];
 
-      if (NUMBERS_AND_WORDS) {
-        const possibleSpelledDigits = DIGITS_SPELLED.filter((spelledDigit) => spelledDigit.startsWith(lineChar));
-  
-        for (const possibleSpelledDigit of possibleSpelledDigits) {
-          let matches = true;
-  
-          for (let i = lineCharIndex; i < parseInt(lineCharIndex)+possibleSpelledDigit.length; i++) {
-            if (possibleSpelledDigit[i - lineCharIndex] !== line[i]) {
-              matches = false;
-              break;
-            };
-          }
-  
-          if (matches) {
-            firstDigit = digitMap[possibleSpelledDigit];
+      const possibleSpelledDigits = DIGITS_SPELLED.filter((spelledDigit) => spelledDigit.startsWith(lineChar));
+
+      for (const possibleSpelledDigit of possibleSpelledDigits) {
+        let matches = true;
+
+        for (let i = lineCharIndex; i < parseInt(lineCharIndex)+possibleSpelledDigit.length; i++) {
+          if (possibleSpelledDigit[i - lineCharIndex] !== line[i]) {
+            matches = false;
             break;
-          }
+          };
         }
 
-        if (firstDigit) break;
+        if (matches) {
+          firstDigit = digitMap[possibleSpelledDigit];
+          break;
+        }
       }
 
+      if (firstDigit) break;
 
       if (DIGITS.includes(lineChar)) {
         firstDigit = lineChar;
@@ -69,26 +64,24 @@ async function main() {
       const lineCharIndex = i;
       const lineChar = line[lineCharIndex];
 
-      if (NUMBERS_AND_WORDS) {
-        const possibleSpelledDigits = DIGITS_SPELLED.filter((spelledDigit) => spelledDigit.startsWith(lineChar));
-      
-        for (const possibleSpelledDigit of possibleSpelledDigits) {
-          let matches = true;
-          for (let i = lineCharIndex; i < parseInt(lineCharIndex)+possibleSpelledDigit.length; i++) {
-            if (possibleSpelledDigit[i - lineCharIndex] !== line[i]) {
-              matches = false;
-              break;
-            };
-          }
-  
-          if (matches) {
-            lastDigit = digitMap[possibleSpelledDigit];
+      const possibleSpelledDigits = DIGITS_SPELLED.filter((spelledDigit) => spelledDigit.startsWith(lineChar));
+    
+      for (const possibleSpelledDigit of possibleSpelledDigits) {
+        let matches = true;
+        for (let i = lineCharIndex; i < parseInt(lineCharIndex)+possibleSpelledDigit.length; i++) {
+          if (possibleSpelledDigit[i - lineCharIndex] !== line[i]) {
+            matches = false;
             break;
-          }
+          };
         }
-  
-        if (lastDigit) break;
+
+        if (matches) {
+          lastDigit = digitMap[possibleSpelledDigit];
+          break;
+        }
       }
+
+      if (lastDigit) break;
 
       if (DIGITS.includes(lineChar)) {
         lastDigit = lineChar;
