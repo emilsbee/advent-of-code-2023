@@ -2,49 +2,13 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
+	"strconv"
 )
 
 const INPUT_FILE = "../input.txt"
-
-func getSymbols(lines []string) string {
-	const notSymbols = "0123456789."
-	validSymbols := ""
-
-	for _, line := range lines {
-		for _, lineChar := range line {
-			charIsSymbol := true
-
-			// Check whether the current character is a symbol
-			for _, nonSymbol := range notSymbols {
-				if lineChar == nonSymbol {
-					charIsSymbol = false
-					break
-				}
-			}
-
-			// If the current character is a symbol then check if it's already in the list of symbols,
-			// if it isn't then add it to the list
-			if charIsSymbol {
-				uniqueSymbol := true
-				
-				for _, validSymbol := range validSymbols {
-					if validSymbol == lineChar {
-						uniqueSymbol = false
-						break
-					}
-				}
-
-				if uniqueSymbol {
-					validSymbols = validSymbols + string(lineChar)
-				}
-			}
-		}
-	}
-
-	return validSymbols
-}
 
 func isCharValidInt (char rune) bool {
 	const validInts = "0123456789"
@@ -57,20 +21,8 @@ func isCharValidInt (char rune) bool {
 	return false
 }
 
-func isCharValidGear (char rune) bool {
+func isCharAGear (char rune) bool {
 	return char == '*'
-}
-
-func isCharValidSymbol (char rune, symbols string) bool {
-	isValid := false
-
-	for _, symbol := range symbols {
-		if char == symbol {
-			isValid = true
-		}
-	}
-
-	return isValid
 }
 
 func main() {
@@ -91,12 +43,8 @@ func main() {
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
-	
-	validSymbols := getSymbols(lines)
- 	_ = validSymbols
 
-	gearNumbers := []int{}
-	_ = gearNumbers
+	gearRatios := []int{}
 
 	// Iterate over all lines
 	for lineIndex, line := range lines {
@@ -104,14 +52,130 @@ func main() {
 		for lineCharIndex := 0; lineCharIndex < len(line); lineCharIndex++ {
 			lineChar := line[lineCharIndex]
 
-			if isCharValidGear(rune(lineChar)) {
+			if isCharAGear(rune(lineChar)) {
 				gearIndex := lineCharIndex
-				isValidGear := false
-				gearNumberOne := -1
-				gearNumberTwo := -1
-				_  = gearNumberOne
-				_  = gearNumberTwo
+				gearNumbers := []int{}
 
+				// Check on the right
+				isSpaceRight := gearIndex + 1 < len(line)
+				if isSpaceRight {
+					if isCharValidInt(rune(line[gearIndex + 1])) {
+						numberEnd := -1
+
+						// Find where the number ends
+						for i := gearIndex + 1; i + 1 < len(line); i++ {
+							if !isCharValidInt(rune(line[i])) {
+								numberEnd = i - 1
+								break
+							} else if i + 1 == len(line) {
+								numberEnd = i
+							}
+						}
+
+						if numberEnd == -1 {
+							log.Fatal("Failed finding number end on the right")
+						}
+
+						gearNumber, _ := strconv.Atoi(line[gearIndex+1:numberEnd+1])
+
+						// Save the found number
+						gearNumbers = append(gearNumbers, gearNumber)
+					}
+				}
+
+				// Check on the left
+				isSpaceLeft := gearIndex > 0
+				if isSpaceLeft {
+					if isCharValidInt(rune(line[gearIndex - 1])) {
+						numberBegin := -1
+
+						// Find where the number begins
+						for i := gearIndex - 1; i >= 0; i-- {
+							if !isCharValidInt(rune(line[i])) {
+								numberBegin = i + 1
+								break
+							} else if i == 0 {
+								numberBegin = 0
+							}
+						}
+
+						if numberBegin == -1 {
+							log.Fatal("Failed finding number beginning on the left")
+						}
+
+						gearNumber, _ := strconv.Atoi(line[numberBegin:gearIndex])
+
+						// Save the found number
+						gearNumbers = append(gearNumbers, gearNumber)
+					}
+				}
+
+				// Check below
+				isLineBelow := lineIndex + 1 < len(lines)
+				if isLineBelow {
+					belowLine := lines[lineIndex + 1]
+					leftBound := gearIndex - 1
+					rightBound := gearIndex + 2
+
+					if gearIndex == 0 {
+						leftBound = 0
+					}
+
+					if gearIndex + 1 == len(belowLine) {
+						rightBound = gearIndex + 1
+					}
+
+					for i := leftBound; i < rightBound; i++ {
+						if isCharValidInt(rune(belowLine[i])) {
+							numberBegin := -1
+							numberEnd := -1
+
+							// Find index where the number begins
+							for j := i; j >= 0; j-- {
+								if !isCharValidInt(rune(belowLine[j])) {
+									numberBegin = j + 1
+									break
+								} else if j == 0 {
+									numberBegin = 0
+								}
+							}
+
+							if numberBegin == -1 {
+								log.Fatal("Could not find where number begins for below line")
+							}
+
+							// Find where the number ends
+							for k := numberBegin; k < len(belowLine); k++ {
+								if !isCharValidInt((rune(belowLine[k]))) {
+									numberEnd = k - 1
+									break
+								} else if k + 1 == len(belowLine) {
+									numberEnd = k
+								}
+							}
+
+							if numberEnd == -1 {
+								log.Fatal("Could not find where number ends for below line")
+							}
+
+							// Reset the loop that iterates "line below" to index after the found number
+							if numberEnd + 1 < rightBound {
+								i = numberEnd + 1
+							} else if numberEnd + 1 == rightBound {
+								i = rightBound
+							} else if numberEnd + 1 == len(belowLine) {
+								i = rightBound
+							} else if numberEnd == rightBound {
+								i = rightBound
+							}
+
+							foundNumber, _ := strconv.Atoi(belowLine[numberBegin:numberEnd+1])	
+
+							// Save the found number
+							gearNumbers = append(gearNumbers, foundNumber)
+						}
+					}
+				}
 
 				// Check on the line above
 				isLineAbove := lineIndex > 0
@@ -130,81 +194,67 @@ func main() {
 
 					for i := leftBound; i < rightBound; i++ {
 						if isCharValidInt(rune(aboveLine[i])) {
-							endOfInt := i
-							// Iterate leftward until we hit a non int character
-							for j := leftBound; j < rightBound; j++ {
-								// Found the beginning of the int
-								if !isCharValidInt(rune(aboveLine[i])) {
-									for k := j + 1; k < rightBound; k++ {
-										// Found the end of the integer
-										if !isCharValidInt((rune(aboveLine[k]))) {
-											if k + 1 != rightBound {
-												// Reset the iterator that goes through all the chars on above line to the
-												// index one after end of the integer we found
-												i = k + 1
-											}
-										}
-									}
+							numberBegin := -1
+							numberEnd := -1
+
+							// Find index where the number begins
+							for j := i; j >= 0; j-- {
+								if !isCharValidInt(rune(aboveLine[j])) {
+									numberBegin = j + 1
+									break
+								} else if j == 0 {
+									numberBegin = j
 								}
 							}
+
+							if numberBegin == -1 {
+								log.Fatal("Could not find where number begins for above line")
+							}
+
+							// Find index where the number ends
+							for k := numberBegin; k < len(aboveLine); k++ {
+								if !isCharValidInt((rune(aboveLine[k]))) {
+									numberEnd = k - 1
+									break
+								} else if k + 1 == len(aboveLine) {
+									numberEnd = k
+								}
+							}
+
+							if numberEnd == -1 {
+								log.Fatal("Could not find where number ends for above line")
+							}
+
+							// Reset the loop that iterates "line above" to index after the found number
+							if numberEnd + 1 < rightBound {
+								i = numberEnd + 1
+							} else if numberEnd + 1 == rightBound {
+								i = rightBound
+							} else if numberEnd + 1 == len(aboveLine) {
+								i = rightBound
+							} else if numberEnd == rightBound {
+								i = rightBound
+							}
+
+							foundNumber, _ := strconv.Atoi(aboveLine[numberBegin:numberEnd+1])	
+
+							// Save the found number
+							gearNumbers = append(gearNumbers, foundNumber)
 						}
 					}
 				}
 
-				// // Check left
-				// isSpaceLeft := enginePartNrIndexStart > 0
-				// if isSpaceLeft && !isValidEngineNumber {
-				// 	if isCharValidSymbol(rune(line[enginePartNrIndexStart-1]), validSymbols) {
-				// 		isValidEngineNumber = true
-				// 	}
-				// }
-
-				// // Check right
-				// isSpaceRight := enginePartNrIndexEnd + 1 < len(line)
-				// if isSpaceRight && !isValidEngineNumber {
-				// 	if isCharValidSymbol(rune(line[enginePartNrIndexEnd + 1]), validSymbols) {
-				// 		isValidEngineNumber = true
-				// 	}
-				// }
-
-				// // Check on the line below
-				// isLineBelow := lineIndex + 1 < len(lines)
-				// if isLineBelow && !isValidEngineNumber {
-				// 	belowLine := lines[lineIndex + 1]
-				// 	leftBound := enginePartNrIndexStart - 1
-				// 	rightBound := enginePartNrIndexEnd + 2
-
-				// 	if enginePartNrIndexStart == 0 {
-				// 		leftBound = 0
-				// 	}
-
-				// 	if enginePartNrIndexEnd + 1 == len(belowLine) {
-				// 		rightBound = enginePartNrIndexEnd + 1
-				// 	}
-
-				// 	for i := leftBound; i < rightBound; i++ {
-				// 		if isCharValidSymbol(rune(belowLine[i]), validSymbols) {
-				// 			isValidEngineNumber = true
-				// 			break
-				// 		}
-				// 	}
-				// }
-
-				// if isValidEngineNumber {
-				// 	engineNrInt, err := strconv.Atoi(engineNr)
-				// 	if err != nil {
-				// 		log.Fatal("Failed converting engine number string to integer:", err)
-				// 	}
-
-				// 	gearNumbers = append(gearNumbers, engineNrInt)
-				// }
+				if len(gearNumbers) == 2 {
+					gearRatio := gearNumbers[0] * gearNumbers[1]
+					gearRatios = append(gearRatios, gearRatio)
+				}
 			}
 		}
 	}
 
-	// gearNrSum := 0
-	// for _, gearNr := range gearNumbers {
-	// 	gearNrSum += gearNr
-	// }
-	// fmt.Println(gearNrSum)
+	gearRatioSum := 0
+	for _, gearRatio := range gearRatios {
+		gearRatioSum += gearRatio
+	}
+	fmt.Println(gearRatioSum)
 }
